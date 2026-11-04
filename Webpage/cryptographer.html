@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simple Cryptographer</title>
+<!-- Web port of cryptographer-gui.py (tkinter). Single file, no dependencies. -->
+<style>
+  :root {
+    --bg: #08111f;
+    --panel: #121d2e;
+    --widget: #1c2a3e;
+    --primary: #7c5cff;
+    --accent: #4dd0ff;
+    --text: #eaf2ff;
+    --muted: #9ab0d0;
+    --success: #7ef7c6;
+    --footer: #9aa8bb;
+    --output-bg: #0d1726;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html, body { margin: 0; min-height: 100%; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+  }
+
+  .app {
+    max-width: 930px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .toolbar { margin-bottom: 14px; }
+
+  .params { margin-bottom: 10px; gap: 18px; }
+
+  .param {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  label {
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    background: var(--primary);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  button:hover,
+  button:focus-visible {
+    background: var(--accent);
+    color: var(--bg);
+    outline: none;
+  }
+
+  button.ghost {
+    background: var(--widget);
+    color: var(--muted);
+    font-size: 12px;
+    padding: 3px 8px;
+  }
+
+  button.ghost:hover,
+  button.ghost:focus-visible {
+    background: var(--primary);
+    color: var(--text);
+  }
+
+  select,
+  input[type="text"],
+  textarea {
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--widget);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+
+  select:focus,
+  input:focus,
+  textarea:focus {
+    outline: 1px solid var(--accent);
+  }
+
+  select { min-width: 180px; }
+  input[type="text"] { width: 150px; }
+  #key { width: 220px; }
+
+  .io {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .textbox {
+    position: relative;
+  }
+
+  .textbox textarea {
+    width: 100%;
+    min-height: 170px;
+    resize: vertical;
+    padding-right: 40px;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .textbox .clear {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+
+  #output {
+    width: 100%;
+    min-height: 170px;
+    resize: vertical;
+    color: var(--success);
+    background: var(--output-bg);
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .buttons { margin: 6px 0 10px; }
+
+  textarea::-webkit-scrollbar { width: 10px; }
+  textarea::-webkit-scrollbar-track { background: #050505; }
+  textarea::-webkit-scrollbar-thumb {
+    background: #505050;
+    border-radius: 999px;
+    border: 2px solid #050505;
+  }
+  textarea::-webkit-scrollbar-thumb:hover { background: #777777; }
+  textarea { scrollbar-color: #505050 #050505; }
+
+  footer {
+    margin-top: auto;
+    padding-top: 12px;
+    text-align: center;
+    color: var(--footer);
+    font-size: 12px;
+  }
+
+  @media (max-width: 600px) {
+    select { min-width: 0; width: 100%; }
+    #key, input[type="text"] { width: 100%; }
+    .param { width: 100%; }
+    .param input[type="text"] { flex: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <h1>Simple Cryptographer</h1>
+    <button class="ghost" id="fullscreenBtn" title="Toggle fullscreen" aria-label="Toggle fullscreen">&#x26F6;</button>
+  </header>
+
+  <div class="row toolbar">
+    <label for="cipher">Cipher</label>
+    <select id="cipher">
+      <option>Caesar Cipher</option>
+      <option>A1Z26 Cipher</option>
+      <option>Atbash Cipher</option>
+      <option>Baconian Cipher</option>
+      <option>Beaufort Cipher</option>
+      <option>Vigenere Cipher</option>
+      <option>XOR Cipher</option>
+      <option>Scytale Cipher</option>
+      <option>ROT13 Cipher</option>
+      <option>Morse Cipher</option>
+    </select>
+  </div>
+
+  <div class="row params">
+    <div class="param" id="shiftParam">
+      <label for="shift">Shift</label>
+      <input type="text" id="shift" value="3">
+    </div>
+    <div class="param" id="keyParam" hidden>
+      <label for="key">Key</label>
+      <input type="text" id="key">
+    </div>
+    <div class="param" id="diameterParam" hidden>
+      <label for="diameter">Diameter</label>
+      <input type="text" id="diameter" value="3">
+    </div>
+  </div>
+
+  <section class="io">
+    <label for="input">Input</label>
+    <div class="textbox">
+      <textarea id="input" rows="8" spellcheck="false">HELLO WORLD</textarea>
+      <button class="ghost clear" id="clearBtn" title="Clear input" aria-label="Clear input">&times;</button>
+    </div>
+
+    <div class="row buttons">
+      <button id="encryptBtn">Encrypt</button>
+      <button id="decryptBtn">Decrypt</button>
+      <button id="copyBtn">Copy Result</button>
+      <button id="pasteBtn">Paste Result</button>
+    </div>
+
+    <label for="output">Output</label>
+    <textarea id="output" rows="8" readonly></textarea>
+  </section>
+
+  <footer>All rights reserved, Shreyansh Mishra (26BCE10245)</footer>
+</div>
+
+<script>
+/* ---------- helpers ---------- */
+
+// Python-style modulo (always non-negative)
+const mod = (n, m) => ((n % m) + m) % m;
+
+const isUpper = (c) => c >= "A" && c <= "Z";
+const isLower = (c) => c >= "a" && c <= "z";
+const isAlpha = (c) => isUpper(c) || isLower(c);
+
+// Mirrors Python int(s), falling back when the string is empty or invalid
+function pyInt(s, fallback) {
+  const t = s.trim();
+  return /^[+-]?\d+$/.test(t) ? parseInt(t, 10) : fallback;
+}
+
+/* ---------- ciphers (ports of the Python process_* functions) ---------- */
+
+function caesar(text, shift, encrypt) {
+  if (!encrypt) shift = -shift;
+  let out = "";
+  for (const ch of text) {
+    if (isAlpha(ch)) {
+      const base = isUpper(ch) ? 65 : 97;
+      out += String.fromCharCode(mod(ch.charCodeAt(0) - base + shift, 26) + base);
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+
+function a1z26(text, encrypt) {
+  if (encrypt) {
+    const encodedWords = [];
+    for (const word of text.toUpperCase().split(" ")) {
+      const nums = [];
+      for (const ch of word) {
+        if (isAlpha(ch)) nums.push(String(ch.charCodeAt(0) - 64));
+      }
+      if (nums.length) encodedWords.push(nums.join("-"));
+    }
+    return encodedWords.join("/");
+  }
+
+  const decodedWords = [];
+  for (const word of text.split("/")) {
+    let s = "";
+    for (const num of word.trim().split("-")) {
+      if (/^[0-9]+$/.test(num)) s += String.fromCodePoint(parseInt(num, 10) + 64);
+    }
+    decodedWords.push(s);
+  }
+  return decodedWords.join(" ");
+}
+
+function atbash(text) {
+  let out = "";
+  for (const ch of text) {
+    if (isAlpha(ch)) {
+      const swapped = String.fromCharCode(155 - ch.toUpperCase().charCodeAt(0)); // A<->Z, B<->Y, ...
+      out += isUpper(ch) ? swapped : swapped.toLowerCase();
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+
+const BACON = Object.create(null);
+for (let i = 0; i < 26; i++) {
+  BACON[String.fromCharCode(65 + i)] = i.toString(2).padStart(5, "0").replace(/0/g, "A").replace(/1/g, "B");
+}
+
+function baconian(text, encrypt) {
+  const reversed = Object.create(null);
+  for (const letter of Object.keys(BACON)) reversed[BACON[letter]] = letter;
+
+  if (encrypt) {
+    const encoded = [];
+    for (const ch of text.toUpperCase()) {
+      if (BACON[ch] !== undefined) encoded.push(BACON[ch]);
+      else if (ch === " ") encoded.push("/");
+      else throw new Error("Baconian cipher only supports letters and spaces");
+    }
+    return encoded.join(" ");
+  }
+
+  const decoded = [];
+  for (const piece of text.toUpperCase().split(" ")) {
+    if (!piece) continue;
+    if (reversed[piece] !== undefined) decoded.push(reversed[piece]);
+    else if (piece === "/") decoded.push(" ");
+    else throw new Error("Invalid Baconian Text; Use 5 A / B characters");
+  }
+  const s = decoded.join("");
+  // Python's str.capitalize(): first char upper, rest lower
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function beaufort(text, key) {
+  if (!text) return "";
+  if (!key) throw new Error("A key is required for Beaufort Cipher to Function");
+
+  const k = Array.from(key.toUpperCase());
+  let out = "";
+  let keyIndex = 0;
+  for (const ch of text) {
+    if (isAlpha(ch)) {
+      const base = isUpper(ch) ? 65 : 97;
+      const keyVal = k[keyIndex % k.length].codePointAt(0) - 65;
+      const textVal = ch.charCodeAt(0) - base;
+      const c = String.fromCharCode(mod(keyVal - textVal, 26) + 65);
+      out += isUpper(ch) ? c : c.toLowerCase();
+      keyIndex++;
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+
+function vigenere(text, key, encrypt) {
+  if (!key) throw new Error("A key is required for Vigenere Cipher to Function");
+
+  const k = Array.from(key.toUpperCase());
+  let out = "";
+  let keyIndex = 0;
+  for (const ch of text) {
+    if (isAlpha(ch)) {
+      const base = isUpper(ch) ? 65 : 97;
+      let shiftVal = k[keyIndex % k.length].codePointAt(0) - 65;
+      if (!encrypt) shiftVal = -shiftVal;
+      out += String.fromCharCode(mod(ch.charCodeAt(0) - base + shiftVal, 26) + base);
+      keyIndex++;
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+
+function xor(text, key, encrypt) {
+  if (!key) throw new Error("A key is required for XOR Cipher to Function");
+
+  const t = Array.from(text);
+  const k = Array.from(key);
+
+  if (encrypt) {
+    return t
+      .map((ch, i) => (ch.codePointAt(0) ^ k[i % k.length].codePointAt(0)).toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  const chunks = [];
+  for (let i = 0; i < t.length; i += 2) chunks.push(t.slice(i, i + 2).join(""));
+
+  return chunks
+    .map((hex, i) => {
+      if (!/^[0-9a-fA-F]+$/.test(hex)) {
+        throw new Error(`invalid literal for int() with base 16: '${hex}'`);
+      }
+      const value = parseInt(hex, 16) ^ k[i % k.length].codePointAt(0);
+      return String.fromCodePoint(value);
+    })
+    .join("");
+}
+
+function scytale(text, diameter, encrypt) {
+  if (diameter <= 1) return text;
+
+  const t = Array.from(text);
+  const len = t.length;
+  const cols = Math.ceil(len / diameter);
+
+  if (encrypt) {
+    const padded = t.concat(Array(diameter * cols - len).fill(" "));
+    const out = [];
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < diameter; r++) out.push(padded[r * cols + c]);
+    }
+    return out.join("");
+  }
+
+  const result = Array(len).fill(null);
+  let cur = 0;
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < diameter; r++) {
+      const idx = r * cols + c;
+      if (cur < len) {
+        if (idx >= len) throw new Error("list assignment index out of range");
+        result[idx] = t[cur++];
+      }
+    }
+  }
+  return result.filter((x) => x !== null && x !== "").join("").trimEnd();
+}
+
+function rot13(text) {
+  return text.replace(/[A-Za-z]/g, (c) => {
+    const base = isUpper(c) ? 65 : 97;
+    return String.fromCharCode(mod(c.charCodeAt(0) - base + 13, 26) + base);
+  });
+}
+
+const MORSE = Object.assign(Object.create(null), {
+  A: ".-", B: "-...", C: "-.-.", D: "-..", E: ".",
+  F: "..-.", G: "--.", H: "....", I: "..", J: ".---",
+  K: "-.-", L: ".-..", M: "--", N: "-.", O: "---",
+  P: ".--.", Q: "--.-", R: ".-.", S: "...", T: "-",
+  U: "..-", V: "...-", W: ".--", X: "-..-", Y: "-.--", Z: "--..",
+  1: ".----", 2: "..---", 3: "...--", 4: "....-", 5: ".....",
+  6: "-....", 7: "--...", 8: "---..", 9: "----.", 0: "-----",
+  ",": "--..--", ".": ".-.-.-", "?": "..--..", "/": "-..-.", "-": "-....-",
+  "(": "-.--.", ")": "-.--.-",
+});
+
+function morse(text, encrypt) {
+  if (encrypt) {
+    return Array.from(text.toUpperCase())
+      .map((ch) => {
+        if (ch === " ") return "/ ";
+        return MORSE[ch] !== undefined ? MORSE[ch] + " " : ch;
+      })
+      .join("")
+      .trim();
+  }
+
+  const reversed = Object.create(null);
+  for (const ch of Object.keys(MORSE)) reversed[MORSE[ch]] = ch;
+  reversed["/"] = " ";
+
+  let out = "";
+  for (const token of text.split(" ")) {
+    if (reversed[token] !== undefined) out += reversed[token];
+  }
+  return out;
+}
+
+function processTranslation(cipherName, text, encrypt, key, shift, diameter) {
+  const name = cipherName.trim().toLowerCase();
+
+  if (name.includes("caesar")) return caesar(text, shift, encrypt);
+  if (name.includes("a1z26") || name.includes("a1z")) return a1z26(text, encrypt);
+  if (name.includes("atbash")) return atbash(text);
+  if (name.includes("baconian")) return baconian(text, encrypt);
+  if (name.includes("beaufort")) return beaufort(text, key);
+  if (name.includes("vigenere")) return vigenere(text, key, encrypt);
+  if (name.includes("xor")) return xor(text, key, encrypt);
+  if (name.includes("scytale")) return scytale(text, diameter, encrypt);
+  if (name.includes("rot13")) return rot13(text);
+  if (name.includes("morse")) return morse(text, encrypt);
+
+  throw new Error(`Unable to trace the cipher: ${cipherName}`);
+}
+
+/* ---------- UI wiring (port of CipherNightGUI) ---------- */
+
+const $ = (id) => document.getElementById(id);
+
+const cipherSelect = $("cipher");
+const shiftInput = $("shift");
+const keyInput = $("key");
+const diameterInput = $("diameter");
+const inputBox = $("input");
+const outputBox = $("output");
+
+function updateParameterFields() {
+  const cipher = cipherSelect.value.toLowerCase();
+  $("shiftParam").hidden = !cipher.includes("caesar");
+  $("keyParam").hidden = !["beaufort", "vigenere", "xor"].some((n) => cipher.includes(n));
+  $("diameterParam").hidden = !cipher.includes("scytale");
+}
+
+function transform(encrypt) {
+  const text = inputBox.value.trim();
+  const shift = pyInt(shiftInput.value, 0);
+  const diameter = pyInt(diameterInput.value, 1);
+
+  try {
+    outputBox.value = processTranslation(cipherSelect.value, text, encrypt, keyInput.value, shift, diameter);
+  } catch (err) {
+    outputBox.value = `Error: ${err.message}`;
+  }
+}
+
+async function copyResult(btn) {
+  try {
+    await navigator.clipboard.writeText(outputBox.value.trim());
+    const original = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => (btn.textContent = original), 1200);
+  } catch {
+    btn.textContent = "Copy failed";
+    setTimeout(() => (btn.textContent = "Copy Result"), 1200);
+  }
+}
+
+async function pasteResult() {
+  let clip;
+  try {
+    clip = await navigator.clipboard.readText();
+  } catch {
+    return; // clipboard denied or empty; do nothing, like the original
+  }
+  inputBox.focus();
+  inputBox.setRangeText(clip, inputBox.selectionStart, inputBox.selectionStart, "end");
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+cipherSelect.addEventListener("change", updateParameterFields);
+$("encryptBtn").addEventListener("click", () => transform(true));
+$("decryptBtn").addEventListener("click", () => transform(false));
+$("copyBtn").addEventListener("click", (e) => copyResult(e.currentTarget));
+$("pasteBtn").addEventListener("click", pasteResult);
+$("clearBtn").addEventListener("click", () => {
+  inputBox.value = "";
+  inputBox.focus();
+});
+$("fullscreenBtn").addEventListener("click", toggleFullscreen);
+
+updateParameterFields();
+</script>
+</body>
+</html>
