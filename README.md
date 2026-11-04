@@ -1,7 +1,7 @@
 # Simple-Cryptographer
 <img width="1158" height="787" alt="Screenshot 2026-09-26 154032" src="https://github.com/user-attachments/assets/947c5164-ffb5-4e40-b717-cb27cf244197" />
 
-This repo consists of a Python Cryptography Application (CLI, GUI, EXECUTABLE) and a web version that runs in any browser.
+This repo consists of a Python Cryptography Application (CLI, GUI, EXECUTABLE, Webpage) and a web version that runs in any browser.
 The program is solely built on python and serves as a way to encrypt and decrypt messages.
 
 This project is a basic encryption and decryption toolkit that supports 10 classical historical ciphers. A total of 3 versions could be find in the files: a Procedural Command-Line Interface, a polished, Object-Oriented Graphical User Interface, and a web page version. The final executable represents the best desktop version of the app yet, and the web version lets you use the toolkit without installing anything.
