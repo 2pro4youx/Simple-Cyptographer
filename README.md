@@ -10,7 +10,7 @@ This project is a basic encryption and decryption toolkit that supports 10 class
 
 The app now has a webpage. The web version is a single self-contained file, `index.html`, with no dependencies, and it runs entirely in the browser. Nothing you type is sent to a server.
 
-**Live site:** `https://<your-username>.github.io/<repo-name>/` *(replace with your GitHub Pages URL)*
+**Live site:** `https://2pro4youx.github.io/simple-cryptographer/` *(replace with your GitHub Pages URL)*
 
 What's new in this update:
 - **Browser-based interface** - Runs on desktop and mobile without Python or an installer
@@ -24,14 +24,6 @@ What's new in this update:
 ### Running the Web Version Locally
 1. Download or clone the repository
 2. Open `index.html` in any modern browser (Chrome, Edge, Firefox, Safari)
-
-### Hosting Your Own Copy on GitHub Pages
-1. Make sure `index.html` is at the root of your repository
-2. Go to **Settings → Pages**
-3. Under *Build and deployment*, select the `main` branch and the `/ (root)` folder, then save
-4. Your site will be live at `https://<your-username>.github.io/<repo-name>/` within a minute or two
-
-> **Note:** Copy and Paste use the browser Clipboard API, which only works on `https://` or `localhost`. GitHub Pages serves over HTTPS, so this works there. The browser will ask for permission the first time you use Paste.
 
 ### Web vs. Desktop Differences
 - The command-line `Cipher` base classes are not included in the web version, since the GUI never used them
